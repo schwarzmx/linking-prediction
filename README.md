@@ -5,7 +5,7 @@ Latent Feature Model (Menon, Elkan) and Supervised Matrix Factorization (Zhu et 
 To run each of the algorithms execute either of the main scripts and provide their
 corresponding parameters. Both algorithm implementations expect a CSV with three
 columns (u,v,y), which represent edges (u,v) with their respective label. For some
-syntetic sample datasets look at the `datasets` folder.
+syntetic sample datasets look at the `dataset` folder.
 
 ## Requirements
 The code was coded in Matlab using the Optimization Toolbox, but could be used also
