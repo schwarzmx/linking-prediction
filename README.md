@@ -7,13 +7,13 @@ corresponding parameters. Both algorithm implementations expect a CSV with three
 columns (u,v,y), which represent edges (u,v) with their respective label. For some
 syntetic sample datasets look at the `datasets` folder.
 
-# Requirements
+## Requirements
 The code was coded in Matlab using the Optimization Toolbox, but could be used also
 with Octave. Other optimization tools could be also easily adapted.
 
-# Acknowledgements
+## Acknowledgements
 The LFL implementation is based on A.K. Menon's [sample code](http://cseweb.ucsd.edu/~akmenon/code/).
 
-# License
+## License
 MIT License (see attached LICENSE file for details). It would be nice to give me
 some acknowledgement should this code be used in any of your projects/research.
