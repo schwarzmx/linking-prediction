@@ -1,9 +1,12 @@
+%--- ADD minFunc ---%
+addpath(genpath('minFunc_2012'));
 %--- LOAD DATASET ---%
-% Tr = csv2struct('dataset/train_1x1.csv');
-Tr = csv2struct('dataset/train_3x3.csv');
-
+Tr = csv2struct('dataset/train_20.csv');
+Te = csv2struct('dataset/train_20.csv');
+% Tr = csv2struct('dataset/train_3x3.csv');
+% Te = csv2struct('dataset/train_3x3.csv');
 % number of latent features
-k = 2;
+k = 5;
 % penalty
 lambda = 1e-4;
 
@@ -18,7 +21,7 @@ Tr.u = Tr.u(I);
 Tr.v = Tr.v(I);
 Tr.y = Tr.y(I);
 
-% Figure out number of users/movies and number of possible ratings
+% Figure out number of users and number of possible labels
 U = max(usersU) - min(usersU) + 1;
 V = max(usersV) - min(usersV) + 1;
 % Y = max(labels) - min(labels) + 1;
@@ -33,10 +36,16 @@ fun = @(theWeights) lflObjectiveFunction(theWeights, k, Y, U, lambda,...
 initialW = [userW(:); lambdaW(:)];
 
 %--- OPTIMIZATION OPTIONS ---%
+%--- minFunc ---%
+options.numDiff = 1;
+options.Display = 'iter';
+options.MaxFunEvals = 500000;
+
+%--- fminunc ---%
 % finite differences gradient
-options = optimset('Display','iter',...
-            'FunValCheck','on',...
-            'Diagnostics','on');
+% options = optimset('Display','iter',...
+%             'FunValCheck','on',...
+%             'Diagnostics','on');
 
 % given gradient, with check
 % options = optimset('GradObj','on',...
@@ -52,9 +61,10 @@ options = optimset('Display','iter',...
 %             'Diagnostics','on');
 
 %--- LEARNING ---%
-[W, fval] = fminunc(fun, initialW, options);
+% [W, fval] = fminunc(fun, initialW, options);
+W = minFunc(fun, initialW, options);
 
-disp(W);
+% disp(W);
 % disp(fval);
 
 %--- MAKE PREDICTION ---%
@@ -66,10 +76,19 @@ W.lambdaW = lambdaW;
 W.usersU = usersU;
 W.usersV = usersV;
 W.labels = labels;
-predictor = @lflPredictor;
+% predictor = @lflPredictor;
 
-[predictions, argmax, probabilities] = predictor(W);
+% [predictions, argmax, probabilities] = predictor(W);
 
-disp(probabilities);
-disp(predictions);
-disp(argmax);
+trainErrors = testLFL(@lflPredictor, W, Tr);
+testErrors = testLFL(@lflPredictor, W, Te);
+
+format = strcat('\n train/test 0-1 error = %4.4f / %4.4f',...
+    ', rmse = %4.4f / %4.4f',', mae = %4.4f / %4.4f ');
+disp(sprintf(format, trainErrors.zoe, testErrors.zoe, trainErrors.rmse,...
+    testErrors.rmse, trainErrors.mae, testErrors.mae))
+
+
+% disp(probabilities);
+% disp(predictions);
+% disp(argmax);
