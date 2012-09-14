@@ -1,10 +1,21 @@
-%--- ADD minFunc ---%
-addpath(genpath('minFunc_2012'));
-%--- LOAD DATASET ---%
-Tr = csv2struct('dataset/train_20.csv');
-Te = csv2struct('dataset/train_20.csv');
+%--- OPTIMIZATION METHOD ---%
+% method = 'bfgs';
+method = 'lbfgs';
+
+%--- LOAD DATASET (synthetic)---%
+Tr = csv2struct('dataset/train_200.csv');
+Te = csv2struct('dataset/test_200.csv');
+Tr = csv2struct('dataset/train_100.csv');
+Te = csv2struct('dataset/test_100.csv');
+% Tr = csv2struct('dataset/train_50.csv');
+% Te = csv2struct('dataset/test_50.csv');
+% Tr = csv2struct('dataset/train_10.csv');
+% Te = csv2struct('dataset/test_10.csv');
 % Tr = csv2struct('dataset/train_3x3.csv');
-% Te = csv2struct('dataset/train_3x3.csv');
+% Te = csv2struct('dataset/test_3x3.csv');
+% Tr = csv2struct('dataset/train_1x1.csv');
+% Te = csv2struct('dataset/train_1x1.csv');
+
 % number of latent features
 k = 5;
 % penalty
@@ -36,33 +47,41 @@ fun = @(theWeights) lflObjectiveFunction(theWeights, k, Y, U, lambda,...
 initialW = [userW(:); lambdaW(:)];
 
 %--- OPTIMIZATION OPTIONS ---%
-%--- minFunc ---%
-options.numDiff = 1;
-options.Display = 'iter';
-options.MaxFunEvals = 500000;
+if strcmp(method, 'lbfgs')
+    %--- minFunc ---%
+    addpath(genpath('minFunc_2012'));
+    
+    options.DerivativeCheck = 'off';
+    options.numDiff = 0;
+    options.Corr = 500;
+    options.Display = 'iter';
+    options.MaxFunEvals = 1000;
+elseif strcmp(method, 'bfgs')
+    %--- fminunc ---%
+%     finite differences gradient
+%     options = optimset('Display','iter',...
+%                 'FunValCheck','on',...
+%                 'Diagnostics','on');
 
-%--- fminunc ---%
-% finite differences gradient
-% options = optimset('Display','iter',...
-%             'FunValCheck','on',...
-%             'Diagnostics','on');
+    % given gradient, with check
+%     options = optimset('GradObj','on',...
+%                 'Display','iter',...
+%                 'FunValCheck','on',...
+%                 'DerivativeCheck','on',...
+%                 'Diagnostics','on');
 
-% given gradient, with check
-% options = optimset('GradObj','on',...
-%             'Display','iter',...
-%             'FunValCheck','on',...
-%             'DerivativeCheck','on',...
-%             'Diagnostics','on');
-
-% given gradient, no check
-% options = optimset('GradObj','on',...
-%             'Display','iter',...
-%             'FunValCheck','on',...
-%             'Diagnostics','on');
+    % given gradient, no check
+    options = optimset('GradObj','on',...
+                'Display','iter',...
+                'Diagnostics','on');
+end
 
 %--- LEARNING ---%
-% [W, fval] = fminunc(fun, initialW, options);
-W = minFunc(fun, initialW, options);
+if strcmp(method, 'lbfgs')
+    W = minFunc(fun, initialW, options);
+elseif strcmp(method, 'bfgs')
+    [W, fval] = fminunc(fun, initialW, options);
+end
 
 % disp(W);
 % disp(fval);

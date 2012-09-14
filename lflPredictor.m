@@ -11,7 +11,7 @@ function [predictions, argmaxPredictions, probabilities] = lflPredictor(w)
     n = length(w.usersU);
     
     probabilities = zeros(U, U, Y);
-    for index = 1 : n;
+    for index = 1 : n;        
         u = w.usersU(index);
         v = w.usersV(index);
 

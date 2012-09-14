@@ -19,6 +19,9 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
         v = usersV(index);
         y = labels(index);
 
+        % ignore unknown links (left for cross-validation)
+        if y == 0 continue; end
+        
         uW = userW(:,:,u);
         vW = userW(:,:,v);
         lW = lambdaW(:,:,u,v);
@@ -30,19 +33,22 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
         
         % only take into account the prob of the current label
         fun = fun - log(p(y))...
-            + (lambda / 2) * (norm(uW, 'fro'))^2; % + norm(lW, 'fro')^2;
+            + (lambda / 2) * ((norm(uW, 'fro'))^2 + norm(lW, 'fro')^2);
         
         % do log gradient
         if nargout == 2
             I = ((1:Y) == y); % I(y = z) in the paper
-            Gu = bsxfun(@times, lW * vW, (p - I));
-            Gl = bsxfun(@times, (uW * vW'), (p - I));
-%             prod = (vW' * lW)';
-%             prod = lW * vW;
-%             Gu = -bsxfun(@times, prod, I)+ bsxfun(@times, prod, p);
-%             
-%             outerProd = uW(:,y) * vW(:,y)';
-%             Gl = (outerProd) - outerProd * p(y);
+            Gu = bsxfun(@times,(lW + lW')* vW, (p - I));
+            
+            % TODO: do this iteratively for |Y| > 2
+            Gl_ = zeros(k,k,Y);
+            Gl_(:,:,1) = uW(:,1) * vW(:,1)';
+            Gl_(:,:,2) = uW(:,2) * vW(:,2)';
+            Gl = -Gl_(:,:,y) + Gl_(:,:,1) * p(1) + Gl_(:,:,2) * p(2);
+            
+            % regularization
+            Gu = Gu + lambda * uW;
+            Gl = Gl + lambda * lW;
 
             GuW(:,:,u)=GuW(:,:,u) + Gu;
             GlW(:,:,u,v)=GlW(:,:,u,v) + Gl;
