@@ -1,23 +1,23 @@
 %--- OPTIMIZATION METHOD ---%
-% method = 'bfgs';
-method = 'lbfgs';
+method = 'bfgs';
+% method = 'lbfgs';
 
 %--- LOAD DATASET (synthetic)---%
-Tr = csv2struct('dataset/train_200.csv');
-Te = csv2struct('dataset/test_200.csv');
-Tr = csv2struct('dataset/train_100.csv');
-Te = csv2struct('dataset/test_100.csv');
+% Tr = csv2struct('dataset/train_200.csv');
+% Te = csv2struct('dataset/test_200.csv');
+% Tr = csv2struct('dataset/train_100.csv');
+% Te = csv2struct('dataset/test_100.csv');
 % Tr = csv2struct('dataset/train_50.csv');
 % Te = csv2struct('dataset/test_50.csv');
 % Tr = csv2struct('dataset/train_10.csv');
 % Te = csv2struct('dataset/test_10.csv');
-% Tr = csv2struct('dataset/train_3x3.csv');
-% Te = csv2struct('dataset/test_3x3.csv');
+Tr = csv2struct('dataset/train_3x3.csv');
+Te = csv2struct('dataset/test_3x3.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
 
 % number of latent features
-k = 5;
+k = 1;
 % penalty
 lambda = 1e-4;
 
@@ -40,7 +40,7 @@ Y = 2;
 
 %-- INITIALIZE WEIGHTS --%
 userW = 1/k * randn(k, Y, U);
-% lambdaW(:,:,i,j) is a k by k matrix for each edge ij
+%-- lambdaW(:,:,i,j) is a k by k matrix for each edge ij
 lambdaW = 1/k * randn(k, k, U, U);
 fun = @(theWeights) lflObjectiveFunction(theWeights, k, Y, U, lambda,...
     usersU, usersV, labels);
@@ -64,16 +64,16 @@ elseif strcmp(method, 'bfgs')
 %                 'Diagnostics','on');
 
     % given gradient, with check
-%     options = optimset('GradObj','on',...
-%                 'Display','iter',...
-%                 'FunValCheck','on',...
-%                 'DerivativeCheck','on',...
-%                 'Diagnostics','on');
-
-    % given gradient, no check
     options = optimset('GradObj','on',...
                 'Display','iter',...
+                'FunValCheck','on',...
+                'DerivativeCheck','on',...
                 'Diagnostics','on');
+
+    % given gradient, no check
+%     options = optimset('GradObj','on',...
+%                 'Display','iter',...
+%                 'Diagnostics','on');
 end
 
 %--- LEARNING ---%
