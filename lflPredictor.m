@@ -14,16 +14,25 @@ function [predictions, argmaxPredictions, probabilities] = lflPredictor(w)
     for index = 1 : n;        
         u = w.usersU(index);
         v = w.usersV(index);
-
+%         y = w.labels(index);
+%         
+%         if y == 0; continue; end
+        
         uW = w.userW(:,:,u);
-        vW = w.userW(:,:,v);
-        lW = w.lambdaW(:,:,u,v);
+%         lW = w.lambdaW(:,:,y);
+        lW = w.lambdaW;
 
         % Vector whose ith element is Pr[y = i | u, v; w]
-        p = exp(diag(uW' * lW * vW));
+        p = exp(diag(uW' * lW * uW));
         p = p/sum(p);
         probabilities(u, v, :) = p;
-    end    
+    end
+%     for y = 1:Y
+%         uW = squeeze(w.userW(:,y,:));
+% %         lW = squeeze(w.lambdaW(:,:,y));
+%         lW = squeeze(w.lambdaW);
+%         probabilities(:,:,y) = exp(uW' * lW * uW);
+%     end
     probabilities = bsxfun(@rdivide, probabilities, sum(probabilities, 3));
     predictions = sum(bsxfun(@times, reshape(1:Y, [1 1 Y]), probabilities), 3);
     [values, argmaxPredictions] = max(probabilities, [], 3);

@@ -4,7 +4,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
 
 % extract weights from W
     userW = reshape(W(1 : k*Y*U), k, Y, U);
-    lambdaW = reshape(W(k*Y*U+1 : end), k, k, U, U);
+    lambdaW = reshape(W(k*Y*U+1 : end), k, k);
     
     n = length(usersU);
     if nargout == 2
@@ -16,20 +16,17 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
 
     for index = 1 : n
         u = usersU(index);
-        v = usersV(index);
         y = labels(index);
-
+        
         % ignore unknown links (left for cross-validation)
         if y == 0 
             continue; 
         end
         
         uW = userW(:,:,u);
-        vW = userW(:,:,v);
-        lW = lambdaW(:,:,u,v);
 
         % Vector whose ith element is Pr[label = i | u, v; w]
-        p = exp(diag(uW' * lW * vW));
+        p = exp(diag(uW' * lambdaW * uW));
         p = p/sum(p);
         p = p';
         
@@ -40,29 +37,27 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
         % do log gradient
         if nargout == 2
             I = ((1:Y) == y); % I(y = z) in the paper
-            if u == v
-                prod = (lW + lW') * vW;
-            else
-                prod = lW * vW;
-            end
-            Gu = bsxfun(@times,prod, (p - I));
+            Gu = bsxfun(@times,(lambdaW + lambdaW') * uW, (p - I));
             
             % TODO: do this iteratively for |Y| > 2
             Gl_ = zeros(k,k,Y);
-            Gl_(:,:,1) = uW(:,1) * vW(:,1)';
-            Gl_(:,:,2) = uW(:,2) * vW(:,2)';
+            Gl_(:,:,1) = uW(:,1) * uW(:,1)';
+            Gl_(:,:,2) = uW(:,2) * uW(:,2)';
             Gl = -Gl_(:,:,y) + Gl_(:,:,1) * p(1) + Gl_(:,:,2) * p(2);
             
             % regularization
             Gu = Gu + lambda * uW;
 
             GuW(:,:,u)=GuW(:,:,u) + Gu;
-            GlW(:,:,u,v)=GlW(:,:,u,v) + Gl;
+%             GlW(:,:,y)=GlW(:,:,y) + Gl;
+            GlW = GlW + Gl;
         end
     end
     
     if nargout == 2
-        grad = [GuW(:); GlW(:)];
+        GuW = GuW(:);
+        GlW = GlW(:);
+        grad = [GuW; GlW];
     end
 
 end

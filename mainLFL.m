@@ -1,23 +1,25 @@
 %--- OPTIMIZATION METHOD ---%
-method = 'bfgs';
-% method = 'lbfgs';
+% method = 'bfgs';
+method = 'lbfgs';
 
 %--- LOAD DATASET (synthetic)---%
 % Tr = csv2struct('dataset/train_200.csv');
 % Te = csv2struct('dataset/test_200.csv');
-% Tr = csv2struct('dataset/train_100.csv');
-% Te = csv2struct('dataset/test_100.csv');
+Tr = csv2struct('dataset/train_100.csv');
+Te = csv2struct('dataset/test_100.csv');
 % Tr = csv2struct('dataset/train_50.csv');
 % Te = csv2struct('dataset/test_50.csv');
 % Tr = csv2struct('dataset/train_10.csv');
 % Te = csv2struct('dataset/test_10.csv');
-Tr = csv2struct('dataset/train_3x3.csv');
-Te = csv2struct('dataset/test_3x3.csv');
+% Tr = csv2struct('dataset/train_3x3.csv');
+% Te = csv2struct('dataset/test_3x3.csv');
+% Tr = csv2struct('dataset/train_2x2.csv');
+% Te = csv2struct('dataset/train_2x2.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
 
 % number of latent features
-k = 1;
+k = 5;
 % penalty
 lambda = 1e-4;
 
@@ -40,8 +42,8 @@ Y = 2;
 
 %-- INITIALIZE WEIGHTS --%
 userW = 1/k * randn(k, Y, U);
-%-- lambdaW(:,:,i,j) is a k by k matrix for each edge ij
-lambdaW = 1/k * randn(k, k, U, U);
+%-- lambdaW(:,:,i,j) is a k by k matrix for each edge label
+lambdaW = 1/k * randn(k, k);
 fun = @(theWeights) lflObjectiveFunction(theWeights, k, Y, U, lambda,...
     usersU, usersV, labels);
 initialW = [userW(:); lambdaW(:)];
@@ -64,11 +66,11 @@ elseif strcmp(method, 'bfgs')
 %                 'Diagnostics','on');
 
     % given gradient, with check
-    options = optimset('GradObj','on',...
-                'Display','iter',...
-                'FunValCheck','on',...
-                'DerivativeCheck','on',...
-                'Diagnostics','on');
+%     options = optimset('GradObj','on',...
+%                 'Display','iter',...
+%                 'FunValCheck','on',...
+%                 'DerivativeCheck','on',...
+%                 'Diagnostics','on');
 
     % given gradient, no check
 %     options = optimset('GradObj','on',...
@@ -88,7 +90,7 @@ end
 
 %--- MAKE PREDICTION ---%
 userW = reshape(W(1:k*Y*U), k, Y, U);
-lambdaW = reshape(W(k*Y*U+1:end), k, k, U, U);
+lambdaW = reshape(W(k*Y*U+1:end), k, k);
 W = [];
 W.userW = userW; % W.userW(1,:,:) = 1;
 W.lambdaW = lambdaW;
