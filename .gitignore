@@ -6,3 +6,7 @@
 
 # Compiled MEX binaries (all platforms)
 *.mex*
+
+results/
+!results/README
+.DS_Store

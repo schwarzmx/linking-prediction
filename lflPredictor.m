@@ -14,16 +14,20 @@ function [predictions, argmaxPredictions, probabilities] = lflPredictor(w)
     for index = 1 : n;        
         u = w.usersU(index);
         v = w.usersV(index);
-%         y = w.labels(index);
-%         
-%         if y == 0; continue; end
         
         uW = w.userW(:,:,u);
-%         lW = w.lambdaW(:,:,y);
         lW = w.lambdaW;
-
-        % Vector whose ith element is Pr[y = i | u, v; w]
-        p = exp(diag(uW' * lW * uW));
+        
+        if w.withSideInfo
+            s = w.sideInfo(u,:)';
+            sW = w.sideInfoW;
+            
+            % Vector whose ith element is Pr[y = i | u, v; w]
+            p = exp(diag(uW' * lW * uW + sW' * s));
+        else
+            p = exp(diag(uW' * lW * uW));
+        end
+        
         p = p/sum(p);
         probabilities(u, v, :) = p;
     end
