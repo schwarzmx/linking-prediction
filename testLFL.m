@@ -23,7 +23,5 @@ function [ errors, probabilities, predictions ] = testLFL( predictor, w, Te )
     errors.zoe = sum(argmaxPredictions ~= truth)/n;
     errors.mae = sum(abs(round(predictions) - truth))/n;
     errors.rmse = sqrt(sum((predictions - truth).^2)/n);
-
-
 end
 

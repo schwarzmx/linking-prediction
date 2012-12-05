@@ -1,7 +1,16 @@
-function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
-                            usersU, usersV, sideInfo, labels, withSideInfo)
+function [ fun, grad ] = lflObjectiveFunction( W, varargin)
 %LFLOBJECTIVEFUNCTION Directed case of the lfl model with log likelihoods
-
+    % load vars
+    k = varargin{1};
+    Y = varargin{2};
+    U = varargin{3};
+    lambda = varargin{4}; 
+    usersU = varargin{5};
+    usersV = varargin{6}; 
+    sideInfo = varargin{7};
+    labels = varargin{8};
+    withSideInfo = varargin{9};
+    
 % extract weights from W
     userW = reshape(W(1 : k*Y*U), k, Y, U);
     if withSideInfo
@@ -29,8 +38,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
         u = usersU(index);
         v = usersV(index);
         y = labels(index);
-%         s = [sideInfo(u,:)'; sideInfo(v,:)']; 
-        s = sideInfo(u,:)';
+        
         
         % ignore unknown links (left for cross-validation)
         if y == 0 && ~withSideInfo 
@@ -41,6 +49,8 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
 
         % Vector whose ith element is Pr[label = i | u, v; w]
         if withSideInfo
+            s = sideInfo(u,:)';
+            
             p = exp(diag(uW' * lambdaW * uW + sW' * s));
         else    
             p = exp(diag(uW' * lambdaW * uW));
@@ -97,6 +107,5 @@ function [ fun, grad ] = lflObjectiveFunction( W, k, Y, U, lambda,...
             grad = [GuW; GlW];
         end
     end
-
 end
 

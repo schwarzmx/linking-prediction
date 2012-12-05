@@ -1,8 +1,9 @@
 %--- OPTIMIZATION METHOD ---%
 % method = 'bfgs';
 method = 'lbfgs';
-withSideInfo = 1; % yes
-% withSideInfo = 0; % no
+% withSideInfo = 1; % yes
+withSideInfo = 0; % no
+disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
 % Tr = csv2struct('dataset/train_200.csv');
@@ -19,17 +20,22 @@ withSideInfo = 1; % yes
 % Te = csv2struct('dataset/train_2x2.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
-Tr = csv2struct('dataset/train_synthetic.csv');
-Te = csv2struct('dataset/test_synthetic.csv');
-
+% Tr = csv2struct('dataset/train_synthetic.csv');
+% Te = csv2struct('dataset/test_synthetic.csv');
+% Tr = csv2struct('dataset/dataset_small_train.csv');
+% Te = csv2struct('dataset/dataset_small_test.csv');
+Tr = csv2struct('dataset/dataset_full_train.csv');
+Te = csv2struct('dataset/dataset_full_test.csv');
 if withSideInfo
     % the side info should contain as many features as necessary
     % but it's important to have as many rows as there are users
     sideInfo = loadSideInfo('dataset/side_info-synthetic.csv');
+else
+    sideInfo = [];
 end
 
 % number of latent features
-k = 5;
+k = 1;
 % penalty
 lambda = 1e-3;
 
@@ -62,8 +68,7 @@ if withSideInfo
 else
     initialW = [userW(:); lambdaW(:)];
 end
-fun = @(theWeights) lflObjectiveFunction(theWeights, k, Y, U, lambda,...
-    usersU, usersV, sideInfo, labels, withSideInfo);
+
 
 
 %--- OPTIMIZATION OPTIONS ---%
@@ -73,10 +78,11 @@ if strcmp(method, 'lbfgs')
     
     options.DerivativeCheck = 'off';
     options.numDiff = 0;
-    options.Corr = 500;
+    options.Corr = 100;
     options.Display = 'iter';
 %     options.Display = 'final';
     options.MaxFunEvals = 1000;
+    options.MaxIter = 2;
 elseif strcmp(method, 'bfgs')
     %--- fminunc ---%
 %     finite differences gradient
@@ -97,10 +103,14 @@ elseif strcmp(method, 'bfgs')
                 'Diagnostics','on');
 end
 
+disp('training...');
 %--- LEARNING ---%
 if strcmp(method, 'lbfgs')
-    W = minFunc(fun, initialW, options);
+    W = minFunc(@lflObjectiveFunction, initialW, options, k, Y, U, lambda,...
+        usersU, usersV, sideInfo, labels, withSideInfo);
 elseif strcmp(method, 'bfgs')
+    fun = @(theWeights) lflObjectiveFunction(theWeights, k, Y, U, lambda,...
+        usersU, usersV, sideInfo, labels, withSideInfo);
     [W, fval] = fminunc(fun, initialW, options);
 end
 
@@ -136,6 +146,7 @@ W.labels = labels;
 
 % [predictions, argmax, probabilities] = predictor(W);
 
+disp('evaluating...');
 trainErrors = testLFL(@lflPredictor, W, Tr);
 testErrors = testLFL(@lflPredictor, W, Te);
 
