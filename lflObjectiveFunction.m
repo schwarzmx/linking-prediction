@@ -40,6 +40,11 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     sizeGuW = size(GuW);
     iterGuW = zeros([sizeGuW n]);
     fun = zeros(1,n);
+    userWIter = zeros([k Y n]);
+    for i = 1 : n
+        u = usersU(i);
+        userWIter(:,:,i) = userW(:,:,u);
+    end
     
     parfor index = 1 : n
         u = usersU(index);
@@ -52,7 +57,8 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
             continue; 
         end
         
-        uW = userW(:,:,u);
+%         uW = userW(:,:,u);
+        uW = userWIter(:,:,index);
 
         % Vector whose ith element is Pr[label = i | u, v; w]
         if withSideInfo
