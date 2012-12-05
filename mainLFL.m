@@ -22,10 +22,10 @@ disp('loading dataset...');
 % Te = csv2struct('dataset/train_1x1.csv');
 % Tr = csv2struct('dataset/train_synthetic.csv');
 % Te = csv2struct('dataset/test_synthetic.csv');
-% Tr = csv2struct('dataset/dataset_small_train.csv');
-% Te = csv2struct('dataset/dataset_small_test.csv');
-Tr = csv2struct('dataset/dataset_full_train.csv');
-Te = csv2struct('dataset/dataset_full_test.csv');
+Tr = csv2struct('dataset/dataset_small_train.csv');
+Te = csv2struct('dataset/dataset_small_test.csv');
+% Tr = csv2struct('dataset/dataset_full_train.csv');
+% Te = csv2struct('dataset/dataset_full_test.csv');
 if withSideInfo
     % the side info should contain as many features as necessary
     % but it's important to have as many rows as there are users
@@ -82,7 +82,7 @@ if strcmp(method, 'lbfgs')
     options.Display = 'iter';
 %     options.Display = 'final';
     options.MaxFunEvals = 1000;
-    options.MaxIter = 2;
+    options.MaxIter = 10;
 elseif strcmp(method, 'bfgs')
     %--- fminunc ---%
 %     finite differences gradient

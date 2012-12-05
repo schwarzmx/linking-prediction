@@ -6,7 +6,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     U = varargin{3};
     lambda = varargin{4}; 
     usersU = varargin{5};
-    usersV = varargin{6}; 
+%     usersV = varargin{6}; 
     sideInfo = varargin{7};
     labels = varargin{8};
     withSideInfo = varargin{9};
@@ -20,6 +20,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         sW = W(lambdaEnd + 1 : end);
     else
         lambdaW = reshape(W(k*Y*U+1 : end), k, k);
+        sW = 0;
     end
     
     n = length(usersU);
@@ -29,14 +30,20 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         
         if withSideInfo
             GsW = zeros(size(sW));
+        else
+            GsW = 0;
         end
     end
     
-    fun = 0;
-
-    for index = 1 : n
+    % we'll store the values of all iterations in an array
+    % which we'll sum later after the loops
+    sizeGuW = size(GuW);
+    iterGuW = zeros([sizeGuW n]);
+    fun = zeros(1,n);
+    
+    parfor index = 1 : n
         u = usersU(index);
-        v = usersV(index);
+%         v = usersV(index);
         y = labels(index);
         
         
@@ -67,7 +74,8 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         if y == 0
             [val y] = max(p);
         end
-        fun = fun - log(p(y)) + reg;
+%         fun = fun - log(p(y)) + reg;
+        fun(:,index) = - log(p(y)) + reg;
 
         
         % do log gradient
@@ -85,7 +93,10 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
                 % regularization
                 Gu = Gu + lambda * uW;
 
-                GuW(:,:,u)=GuW(:,:,u) + Gu;
+%                 GuW(:,:,u)=GuW(:,:,u) + Gu;
+                currentGuW = zeros(sizeGuW);
+                currentGuW(:,:,u) = Gu; % only the current user is filled
+                iterGuW(:,:,:,index) = currentGuW;
     %             GlW(:,:,y)=GlW(:,:,y) + Gl;
                 GlW = GlW + Gl;
 %             end
@@ -97,6 +108,12 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
             end
         end
     end
+    % total function sum
+    fun = sum(fun);
+    
+    % sum accross users
+    sumAccross = sum(iterGuW, 4);
+    GuW = GuW + sumAccross;
     
     if nargout == 2
         GuW = GuW(:);
