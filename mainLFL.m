@@ -103,6 +103,7 @@ elseif strcmp(method, 'bfgs')
                 'Diagnostics','on');
 end
 
+tic
 disp('training...');
 %--- LEARNING ---%
 if strcmp(method, 'lbfgs')
@@ -113,6 +114,7 @@ elseif strcmp(method, 'bfgs')
         usersU, usersV, sideInfo, labels, withSideInfo);
     [W, fval] = fminunc(fun, initialW, options);
 end
+toc
 
 % disp(W);
 % disp(fval);
