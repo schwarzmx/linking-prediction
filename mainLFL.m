@@ -6,8 +6,8 @@ withSideInfo = 0; % no
 disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
-% Tr = csv2struct('dataset/train_200.csv');
-% Te = csv2struct('dataset/test_200.csv');
+Tr = csv2struct('dataset/train_200.csv');
+Te = csv2struct('dataset/test_200.csv');
 % Tr = csv2struct('dataset/train_100.csv');
 % Te = csv2struct('dataset/test_100.csv');
 % Tr = csv2struct('dataset/train_50.csv');
@@ -22,8 +22,8 @@ disp('loading dataset...');
 % Te = csv2struct('dataset/train_1x1.csv');
 % Tr = csv2struct('dataset/train_synthetic.csv');
 % Te = csv2struct('dataset/test_synthetic.csv');
-Tr = csv2struct('dataset/dataset_small_train.csv');
-Te = csv2struct('dataset/dataset_small_test.csv');
+% Tr = csv2struct('dataset/dataset_small_train.csv');
+% Te = csv2struct('dataset/dataset_small_test.csv');
 % Tr = csv2struct('dataset/dataset_full_train.csv');
 % Te = csv2struct('dataset/dataset_full_test.csv');
 if withSideInfo
@@ -103,6 +103,7 @@ elseif strcmp(method, 'bfgs')
                 'Diagnostics','on');
 end
 
+tic
 disp('training...');
 %--- LEARNING ---%
 if strcmp(method, 'lbfgs')
@@ -113,6 +114,7 @@ elseif strcmp(method, 'bfgs')
         usersU, usersV, sideInfo, labels, withSideInfo);
     [W, fval] = fminunc(fun, initialW, options);
 end
+toc
 
 % disp(W);
 % disp(fval);
