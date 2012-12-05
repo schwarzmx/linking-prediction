@@ -6,8 +6,8 @@ withSideInfo = 0; % no
 disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
-Tr = csv2struct('dataset/train_200.csv');
-Te = csv2struct('dataset/test_200.csv');
+% Tr = csv2struct('dataset/train_200.csv');
+% Te = csv2struct('dataset/test_200.csv');
 % Tr = csv2struct('dataset/train_100.csv');
 % Te = csv2struct('dataset/test_100.csv');
 % Tr = csv2struct('dataset/train_50.csv');
@@ -20,8 +20,8 @@ Te = csv2struct('dataset/test_200.csv');
 % Te = csv2struct('dataset/train_2x2.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
-% Tr = csv2struct('dataset/train_synthetic.csv');
-% Te = csv2struct('dataset/test_synthetic.csv');
+Tr = csv2struct('dataset/train_synthetic.csv');
+Te = csv2struct('dataset/test_synthetic.csv');
 % Tr = csv2struct('dataset/dataset_small_train.csv');
 % Te = csv2struct('dataset/dataset_small_test.csv');
 % Tr = csv2struct('dataset/dataset_full_train.csv');
@@ -35,7 +35,7 @@ else
 end
 
 % number of latent features
-k = 1;
+k = 5;
 % penalty
 lambda = 1e-3;
 
@@ -153,9 +153,15 @@ trainErrors = testLFL(@lflPredictor, W, Tr);
 testErrors = testLFL(@lflPredictor, W, Te);
 
 format = strcat('\n train/test 0-1 error = %4.4f / %4.4f',...
+    ', f1score = %4.4f / %4.4f',', precision = %4.4f / %4.4f',...
+    ', recall = %4.4f / %4.4f',...
     ', rmse = %4.4f / %4.4f',', mae = %4.4f / %4.4f ');
-disp(sprintf(format, trainErrors.zoe, testErrors.zoe, trainErrors.rmse,...
-    testErrors.rmse, trainErrors.mae, testErrors.mae))
+disp(sprintf(format, trainErrors.zoe, testErrors.zoe,...
+    trainErrors.f1score, testErrors.f1score,...
+    trainErrors.precision, testErrors.precision,...
+    trainErrors.recall, testErrors.recall,...
+    trainErrors.rmse, testErrors.rmse,...
+    trainErrors.mae, testErrors.mae));
 
 errors = [trainErrors.zoe, testErrors.zoe, trainErrors.rmse,...
     testErrors.rmse, trainErrors.mae, testErrors.mae];
