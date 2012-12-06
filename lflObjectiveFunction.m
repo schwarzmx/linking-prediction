@@ -27,7 +27,9 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     if nargout == 2
         GuW = zeros(size(userW));
         GlW = zeros(size(lambdaW));
-        
+        sizeGuW = size(GuW);
+        iterGuW = zeros([sizeGuW n]);
+    
         if withSideInfo
             GsW = zeros(size(sW));
         else
@@ -37,8 +39,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     
     % we'll store the values of all iterations in an array
     % which we'll sum later after the loops
-    sizeGuW = size(GuW);
-    iterGuW = zeros([sizeGuW n]);
+    
     fun = zeros(1,n);
     userWIter = zeros([k Y n]);
     for i = 1 : n
@@ -117,11 +118,11 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     % total function sum
     fun = sum(fun);
     
-    % sum accross users
-    sumAccross = sum(iterGuW, 4);
-    GuW = GuW + sumAccross;
-    
     if nargout == 2
+        % sum accross users
+        sumAccross = sum(iterGuW, 4);
+        GuW = GuW + sumAccross;
+        
         GuW = GuW(:);
         GlW = GlW(:);
         if withSideInfo

@@ -3,7 +3,7 @@ function [ errors, probabilities, predictions ] = testLFL( predictor, w, Te )
 
     errors = [];
     dataTe = sparse(Te.u, Te.v, Te.y);
-    n = length(Te.u);
+%     n = length(Te.u);
     
     Y = 2;
 
@@ -19,6 +19,7 @@ function [ errors, probabilities, predictions ] = testLFL( predictor, w, Te )
     end
 
     truth = nonzeros(dataTe);
+    n = length(truth);
     
     truepos = sum((argmaxPredictions .* (argmaxPredictions == truth)) == 2);
     trueneg = sum((argmaxPredictions .* (argmaxPredictions == truth)) == 1);
