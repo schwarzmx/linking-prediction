@@ -6,7 +6,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     U = varargin{3};
     lambda = varargin{4}; 
     usersU = varargin{5};
-%     usersV = varargin{6}; 
+    usersV = varargin{6}; 
     sideInfo = varargin{7};
     labels = varargin{8};
     withSideInfo = varargin{9};
@@ -29,7 +29,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         GlW = zeros(size(lambdaW));
         sizeGuW = size(GuW);
         iterGuW = zeros([sizeGuW n]);
-    
+        
         if withSideInfo
             GsW = zeros(size(sW));
         else
@@ -41,16 +41,19 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     % which we'll sum later after the loops
     
     fun = zeros(1,n);
-    userWIter = zeros([k Y n]);
+    userWIterU = zeros([k Y n]);
+    userWIterV = zeros([k Y n]);
     for i = 1 : n
         u = usersU(i);
-        userWIter(:,:,i) = userW(:,:,u);
+        v = usersV(i);
+        userWIterU(:,:,i) = userW(:,:,u);
+        userWIterV(:,:,i) = userW(:,:,v);
     end
     
-    parfor index = 1 : n
-        u = usersU(index);
+    for dyad = 1 : n
+        u = usersU(dyad);
 %         v = usersV(index);
-        y = labels(index);
+        y = labels(dyad);
         
         
         % ignore unknown links (left for cross-validation)
@@ -59,7 +62,8 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         end
         
 %         uW = userW(:,:,u);
-        uW = userWIter(:,:,index);
+        uW = userWIterU(:,:,dyad);
+        vW = userWIterV(:,:,dyad);
 
         % Vector whose ith element is Pr[label = i | u, v; w]
         if withSideInfo
@@ -67,7 +71,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
             
             p = exp(diag(uW' * lambdaW * uW + sW' * s));
         else    
-            p = exp(diag(uW' * lambdaW * uW));
+            p = exp(diag(uW' * lambdaW * vW));
         end
         p = p/sum(p);
         p = p';
@@ -82,19 +86,26 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
             [val y] = max(p);
         end
 %         fun = fun - log(p(y)) + reg;
-        fun(:,index) = - log(p(y)) + reg;
+        fun(:,dyad) = - log(p(y)) + reg;
 
         
         % do log gradient
         if nargout == 2
 %             if y ~= 0
                 I = ((1:Y) == y); % I(y = z) in the paper
-                Gu = bsxfun(@times,(lambdaW + lambdaW') * uW, (p - I));
+%                 Gu = bsxfun(@times,(lambdaW + lambdaW') * uW, (p - I));
+                Gu = bsxfun(@times, lambdaW * vW, (p - I));
+%                 if u == v
+%                     Gu = bsxfun(@times,(lambdaW + lambdaW') * vW, (p - I));
+%                 else
+%                     
+% %                     Gu_j = bsxfun(@times, (uW' *lambdaW)' , (p - I));
+%                 end
 
                 % TODO: do this iteratively for |Y| > 2
                 Gl_ = zeros(k,k,Y);
-                Gl_(:,:,1) = uW(:,1) * uW(:,1)';
-                Gl_(:,:,2) = uW(:,2) * uW(:,2)';
+                Gl_(:,:,1) = uW(:,1) * vW(:,1)';
+                Gl_(:,:,2) = uW(:,2) * vW(:,2)';
                 Gl = -Gl_(:,:,y) + Gl_(:,:,1) * p(1) + Gl_(:,:,2) * p(2);
 
                 % regularization
@@ -103,7 +114,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
 %                 GuW(:,:,u)=GuW(:,:,u) + Gu;
                 currentGuW = zeros(sizeGuW);
                 currentGuW(:,:,u) = Gu; % only the current user is filled
-                iterGuW(:,:,:,index) = currentGuW;
+                iterGuW(:,:,:,dyad) = currentGuW;
     %             GlW(:,:,y)=GlW(:,:,y) + Gl;
                 GlW = GlW + Gl;
 %             end

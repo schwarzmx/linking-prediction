@@ -1,6 +1,6 @@
 %--- OPTIMIZATION METHOD ---%
-% method = 'bfgs';
-method = 'lbfgs';
+method = 'bfgs';
+% method = 'lbfgs';
 % withSideInfo = 1; % yes
 withSideInfo = 0; % no
 disp('loading dataset...');
@@ -14,14 +14,14 @@ disp('loading dataset...');
 % Te = csv2struct('dataset/test_50.csv');
 % Tr = csv2struct('dataset/train_10.csv');
 % Te = csv2struct('dataset/test_10.csv');
-% Tr = csv2struct('dataset/train_3x3.csv');
-% Te = csv2struct('dataset/test_3x3.csv');
+Tr = csv2struct('dataset/train_3x3.csv');
+Te = csv2struct('dataset/test_3x3.csv');
 % Tr = csv2struct('dataset/train_2x2.csv');
 % Te = csv2struct('dataset/train_2x2.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
-Tr = csv2struct('dataset/train_synthetic.csv');
-Te = csv2struct('dataset/test_synthetic.csv');
+% Tr = csv2struct('dataset/train_synthetic.csv');
+% Te = csv2struct('dataset/test_synthetic.csv');
 % Tr = csv2struct('dataset/dataset_small_train.csv');
 % Te = csv2struct('dataset/dataset_small_test.csv');
 % Tr = csv2struct('dataset/dataset_full_train.csv');
@@ -35,9 +35,9 @@ else
 end
 
 % number of latent features
-k = 2;
+k = 1;
 % penalty
-lambda = 1e-3;
+lambda = 1e-6;
 
 usersU = Tr.u;
 usersV = Tr.v;
@@ -50,7 +50,7 @@ Tr.u = Tr.u(I);
 Tr.v = Tr.v(I);
 Tr.y = Tr.y(I);
 
-% Figure out number of users and number of possible labels
+% Figure out number of users and number çof possible labels
 U = max(usersU) - min(usersU) + 1;
 % Y = max(labels) - min(labels) + 1;
 Y = 2;
@@ -78,11 +78,11 @@ if strcmp(method, 'lbfgs')
     
     options.DerivativeCheck = 'off';
     options.numDiff = 0;
-    options.Corr = 100;
+%     options.Corr = 100;
     options.Display = 'iter';
 %     options.Display = 'final';
-    options.MaxFunEvals = 1000;
-    options.MaxIter = 10;
+    options.MaxFunEvals = 10000;
+    options.MaxIter = 20;
 elseif strcmp(method, 'bfgs')
     %--- fminunc ---%
 %     finite differences gradient
@@ -146,7 +146,6 @@ W.labels = labels;
 
 % predictor = @lflPredictor;
 
-% [predictions, argmax, probabilities] = predictor(W);
 
 disp('evaluating...');
 trainErrors = testLFL(@lflPredictor, W, Tr);
@@ -171,6 +170,8 @@ if withSideInfo
 else
     saveResults('synthetic-no_side_info.csv', errors);
 end
+
+% [predictions, argmax, probabilities] = lflPredictor(W);
 % disp(probabilities);
 % disp(predictions);
 % disp(argmax);

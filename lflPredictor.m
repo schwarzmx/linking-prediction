@@ -16,6 +16,7 @@ function [predictions, argmaxPredictions, probabilities] = lflPredictor(w)
         v = w.usersV(index);
         
         uW = w.userW(:,:,u);
+        vW = w.userW(:,:,v);
         lW = w.lambdaW;
         
         if w.withSideInfo
@@ -25,7 +26,8 @@ function [predictions, argmaxPredictions, probabilities] = lflPredictor(w)
             % Vector whose ith element is Pr[y = i | u, v; w]
             p = exp(diag(uW' * lW * uW + sW' * s));
         else
-            p = exp(diag(uW' * lW * uW));
+%             p = exp(diag(uW' * lW * uW));
+            p = exp(diag(uW' * lW * vW));
         end
         
         p = p/sum(p);
