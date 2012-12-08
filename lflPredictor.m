@@ -6,8 +6,8 @@
 % themselves
 function [predictions, argmaxPredictions, probabilities] = lflPredictor(w)
 
-    Y = size(w.userW, 2);
-    U = size(w.userW, 3);
+    Y = size(w.userUW, 2);
+    U = size(w.userUW, 3);
     n = length(w.usersU);
     
     probabilities = zeros(U, U, Y);
@@ -15,12 +15,12 @@ function [predictions, argmaxPredictions, probabilities] = lflPredictor(w)
         u = w.usersU(index);
         v = w.usersV(index);
         
-        uW = w.userW(:,:,u);
-        vW = w.userW(:,:,v);
+        uW = w.userUW(:,:,u);
+        vW = w.userVW(:,:,v);
         lW = w.lambdaW;
         
         if w.withSideInfo
-            s = w.sideInfo(u,:)';
+            s = [w.sideInfo(u,:)'; w.sideInfo(v,:)';];
             sW = w.sideInfoW;
             
             % Vector whose ith element is Pr[y = i | u, v; w]

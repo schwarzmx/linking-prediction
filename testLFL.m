@@ -25,6 +25,8 @@ function [ errors, probabilities, predictions ] = testLFL( predictor, w, Te )
     trueneg = sum((argmaxPredictions .* (argmaxPredictions == truth)) == 1);
     falsepos = sum((argmaxPredictions .* (argmaxPredictions ~= truth)) == 2);
     falseneg = sum((argmaxPredictions .* (argmaxPredictions ~= truth)) == 1);
+    errors.accuracy = (truepos + trueneg) / ...
+        (truepos + trueneg + falsepos + falseneg);
     errors.precision = truepos / (truepos + falsepos);
     errors.recall = truepos / (truepos + falseneg);
     errors.f1score = 2 * (errors.precision * errors.recall) /...

@@ -1,4 +1,4 @@
-function [ fun ] = smfObjectiveFunction( W, X, lambda, U, k )
+function [ fun, grad ] = smfObjectiveFunction( W, X, lambda, U, k )
 %SMFOBJECTIVEFUNCTION Supervised Matrix Factorization's Objective Function
 
     uW = reshape(W(1 : U*k), U,k);
@@ -8,5 +8,9 @@ function [ fun ] = smfObjectiveFunction( W, X, lambda, U, k )
     mse = norm(diff, 'fro') ^ 2;
     regularization = (lambda / 2) * norm(uW, 'fro') ^ 2;
     fun = mse + regularization;
+    
+    if nargout == 2
+        
+    end
 end
 

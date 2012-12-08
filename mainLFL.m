@@ -1,8 +1,8 @@
 %--- OPTIMIZATION METHOD ---%
-method = 'bfgs';
-% method = 'lbfgs';
-% withSideInfo = 1; % yes
-withSideInfo = 0; % no
+% method = 'bfgs';
+method = 'lbfgs';
+withSideInfo = 1; % yes
+% withSideInfo = 0; % no
 disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
@@ -10,18 +10,22 @@ disp('loading dataset...');
 % Te = csv2struct('dataset/test_200.csv');
 % Tr = csv2struct('dataset/train_100.csv');
 % Te = csv2struct('dataset/test_100.csv');
+% Tr = csv2struct('dataset/synthetic_50v2_train.csv');
+% Te = csv2struct('dataset/synthetic_50v2_test.csv');
+% Tr = csv2struct('dataset/synthetic_50_train.csv');
+% Te = csv2struct('dataset/synthetic_50_test.csv');
 % Tr = csv2struct('dataset/train_50.csv');
 % Te = csv2struct('dataset/test_50.csv');
 % Tr = csv2struct('dataset/train_10.csv');
 % Te = csv2struct('dataset/test_10.csv');
-Tr = csv2struct('dataset/train_3x3.csv');
-Te = csv2struct('dataset/test_3x3.csv');
+% Tr = csv2struct('dataset/train_3x3.csv');
+% Te = csv2struct('dataset/test_3x3.csv');
 % Tr = csv2struct('dataset/train_2x2.csv');
 % Te = csv2struct('dataset/train_2x2.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
-% Tr = csv2struct('dataset/train_synthetic.csv');
-% Te = csv2struct('dataset/test_synthetic.csv');
+Tr = csv2struct('dataset/train_synthetic.csv');
+Te = csv2struct('dataset/test_synthetic.csv');
 % Tr = csv2struct('dataset/dataset_small_train.csv');
 % Te = csv2struct('dataset/dataset_small_test.csv');
 % Tr = csv2struct('dataset/dataset_full_train.csv');
@@ -29,7 +33,7 @@ Te = csv2struct('dataset/test_3x3.csv');
 if withSideInfo
     % the side info should contain as many features as necessary
     % but it's important to have as many rows as there are users
-    sideInfo = loadSideInfo('dataset/side_info-synthetic.csv');
+    sideInfo = loadSideInfo('dataset/side_info-synthetic_normalized.csv');
 else
     sideInfo = [];
 end
@@ -37,7 +41,7 @@ end
 % number of latent features
 k = 1;
 % penalty
-lambda = 1e-6;
+lambda = 5e-3;
 
 usersU = Tr.u;
 usersV = Tr.v;
@@ -56,17 +60,19 @@ U = max(usersU) - min(usersU) + 1;
 Y = 2;
 
 %-- INITIALIZE WEIGHTS --%
-userW = 1/k * randn(k, Y, U);
+userUW = 1/k * randn(k, Y, U);
+userVW = 1/k * randn(k, Y, U);
+% userVW = userUW;
 %-- lambdaW(:,:,i,j) is a k by k matrix for each edge label
 lambdaW = 1/k * randn(k, k);
 if withSideInfo
     % vector of 2 x number features
-    S = size(sideInfo,2);
+    S = 2 * size(sideInfo,2);
     sideInfoW = 1/k * randn(S,1);
     
-    initialW = [userW(:); lambdaW(:); sideInfoW];
+    initialW = [userUW(:); userVW(:); lambdaW(:); sideInfoW];
 else
-    initialW = [userW(:); lambdaW(:)];
+    initialW = [userUW(:); userVW(:); lambdaW(:)];
 end
 
 
@@ -121,9 +127,10 @@ toc
 
 %--- MAKE PREDICTION ---%
 
-userW = reshape(W(1:k*Y*U), k, Y, U);
+userUW = reshape(W(1:k*Y*U), k, Y, U);
+userVW = reshape(W(k*Y*U+1:2*k*Y*U), k, Y, U);
 if withSideInfo
-    lambdaStart = k*Y*U+1;
+    lambdaStart = 2 * k*Y*U+1;
     lambdaEnd = lambdaStart + k * k - 1;
     lambdaW = reshape(W(lambdaStart : lambdaEnd), k, k);
     sideInfoW = W(lambdaEnd + 1 : end);
@@ -133,12 +140,13 @@ if withSideInfo
     W.sideInfoW = sideInfoW; 
     W.sideInfo = sideInfo;
 else
-    lambdaW = reshape(W(k*Y*U+1:end), k, k);
+    lambdaW = reshape(W(2*k*Y*U+1:end), k, k);
     W = [];
     W.withSideInfo = 0;
 end
 
-W.userW = userW; % W.userW(1,:,:) = 1;
+W.userUW = userUW;
+W.userVW = userVW;
 W.lambdaW = lambdaW;
 W.usersU = usersU;
 W.usersV = usersV;
@@ -152,11 +160,15 @@ trainErrors = testLFL(@lflPredictor, W, Tr);
 testErrors = testLFL(@lflPredictor, W, Te);
 
 format = strcat('\n train/test 0-1 error = %4.4f / %4.4f',...
-    ', f1score = %4.4f / %4.4f',', precision = %4.4f / %4.4f',...
+    ', f1score = %4.4f / %4.4f',...
+    ', accuracy = %4.4f / %4.4f',...
+    ', precision = %4.4f / %4.4f',...
     ', recall = %4.4f / %4.4f',...
-    ', rmse = %4.4f / %4.4f',', mae = %4.4f / %4.4f ');
+    ', rmse = %4.4f / %4.4f',...
+    ', mae = %4.4f / %4.4f ');
 disp(sprintf(format, trainErrors.zoe, testErrors.zoe,...
     trainErrors.f1score, testErrors.f1score,...
+    trainErrors.accuracy, testErrors.accuracy,...
     trainErrors.precision, testErrors.precision,...
     trainErrors.recall, testErrors.recall,...
     trainErrors.rmse, testErrors.rmse,...
@@ -171,7 +183,7 @@ else
     saveResults('synthetic-no_side_info.csv', errors);
 end
 
-% [predictions, argmax, probabilities] = lflPredictor(W);
+[predictions, argmax, probabilities] = lflPredictor(W);
 % disp(probabilities);
 % disp(predictions);
 % disp(argmax);

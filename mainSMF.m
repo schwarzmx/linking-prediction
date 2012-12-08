@@ -1,23 +1,26 @@
 addpath(genpath('minFunc_2012'));
 %--- LOAD DATASET ---%
-Tr = csv2struct('dataset/train_20.csv');
-Te = csv2struct('dataset/train_20.csv');
-% Tr = csv2struct('dataset/train_3x3.csv');
-% Te = csv2struct('dataset/train_3x3.csv');
+% Tr = csv2struct('dataset/train_50.csv');
+% Te = csv2struct('dataset/test_50.csv');
+% Tr = csv2struct('dataset/train_20.csv');
+% Te = csv2struct('dataset/train_20.csv');
+Tr = csv2struct('dataset/train_3x3.csv');
+Te = csv2struct('dataset/test_3x3.csv');
 
 % construct data matrix
 X = sparse(Tr.u, Tr.v, Tr.y);
+disp(X);
 
 %--- PARAMETERS ---%
-lambda = 1e-4;  % regularization
+lambda = 1e0;  % regularization
 k = 5;          % number of latent features
 
 %-- INITIALIZE WEIGHTS --%
 usersU = Tr.u;
 usersV = Tr.v;
 labels = Tr.y;
-U = max(usersU) - min(usersU) + 1;
-V = max(usersV) - min(usersV) + 1;
+U = max(usersU);
+V = max(usersV);
 userW = 1/k * randn(U, k);
 lambdaW = 1/k * randn(k, k);
 
