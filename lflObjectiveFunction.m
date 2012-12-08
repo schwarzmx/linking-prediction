@@ -51,11 +51,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     fun = zeros(1,n);
     userWIterU = zeros([k Y n]);
     userWIterV = zeros([k Y n]);
-    if withSideInfo
-        sideInfoIter = zeros([size(sW) n]);
-    else
-        sideInfoIter = 0;
-    end
+    sideInfoIter = zeros([size(sW) n]); % used regardless of withSideInfo
     for i = 1 : n
         u = usersU(i);
         v = usersV(i);
@@ -73,74 +69,74 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         
         
         % ignore unknown links (left for cross-validation)
-        if y == 0
-            continue; 
-        end
-        
-        uW = userWIterU(:,:,dyad);
-        vW = userWIterV(:,:,dyad);
+        if y ~= 0
+            uW = userWIterU(:,:,dyad);
+            vW = userWIterV(:,:,dyad);
 
-        % Vector whose ith element is Pr[label = i | u, v; w]
-        if withSideInfo
-%             s = sideInfo(u,:)';
-            s = sideInfoIter(:,dyad);
-            
-            p = exp(diag(uW' * lambdaW * vW + sW' * s));
-        else    
-            p = exp(diag(uW' * lambdaW * vW));
-        end
-        p = p/sum(p);
-        p = p';
-        
-        % only take into account the prob of the current label
-        if withSideInfo
-            reg = + (lambda / 2) * ...
-                (norm(uW, 'fro')^2 + norm(vW, 'fro')^2 + norm(sW, 'fro')^2);
-        else
-            reg = + (lambda / 2) * (norm(uW, 'fro')^2 + norm(vW, 'fro')^2);
-        end
-        
-        fun(:,dyad) = - log(p(y)) + reg;
-        
-        % do log gradient
-        if withGradient
-                I = ((1:Y) == y); % I(y = z) in the paper
-%                 Gu = bsxfun(@times,(lambdaW + lambdaW') * uW, (p - I));
-                Gu = bsxfun(@times, lambdaW * vW, (p - I));
-                Gv = bsxfun(@times, uW' * lambdaW, (p - I)')';
-%                 if u == v
-%                     Gu = bsxfun(@times,(lambdaW + lambdaW') * vW, (p - I));
-%                 else
-%                     
-% %                     Gu_j = bsxfun(@times, (uW' *lambdaW)' , (p - I));
-%                 end
-
-                % TODO: do this iteratively for |Y| > 2
-                Gl_ = zeros(k,k,Y);
-                Gl_(:,:,1) = uW(:,1) * vW(:,1)';
-                Gl_(:,:,2) = uW(:,2) * vW(:,2)';
-                Gl = -Gl_(:,:,y) + Gl_(:,:,1) * p(1) + Gl_(:,:,2) * p(2);
-
-                % regularization
-                Gu = Gu + lambda * uW;
-                Gv = Gv + lambda * vW;
-
-%                 GuW(:,:,u)=GuW(:,:,u) + Gu;
-                currentGuW = zeros(sizeGuW);
-                currentGuW(:,:,u) = Gu; % only the current user is filled
-                iterGuW(:,:,:,dyad) = currentGuW;
-                
-                currentGvW = zeros(sizeGuW);
-                currentGvW(:,:,v) = Gv; % only the current user is filled
-                iterGvW(:,:,:,dyad) = currentGvW;
-                GlW = GlW + Gl;
+            % Vector whose ith element is Pr[label = i | u, v; w]
             if withSideInfo
-                Gs = -s + s * p(1) + s * p(2);
-                % regularization
-                Gs = Gs + lambda * sW;
-                GsW = GsW + Gs;
+    %             s = sideInfo(u,:)';
+                s = sideInfoIter(:,dyad);
+
+                p = exp(diag(uW' * lambdaW * vW + sW' * s));
+            else    
+                p = exp(diag(uW' * lambdaW * vW));
+            end
+            p = p/sum(p);
+            p = p';
+
+            % only take into account the prob of the current label
+            if withSideInfo
+                reg = + (lambda / 2) * ...
+                    (norm(uW, 'fro')^2 + norm(vW, 'fro')^2 + norm(sW, 'fro')^2);
+            else
+                reg = + (lambda / 2) * (norm(uW, 'fro')^2 + norm(vW, 'fro')^2);
+            end
+
+            fun(:,dyad) = - log(p(y)) + reg;
+
+            % do log gradient
+            if withGradient
+                    I = ((1:Y) == y); % I(y = z) in the paper
+    %                 Gu = bsxfun(@times,(lambdaW + lambdaW') * uW, (p - I));
+                    Gu = bsxfun(@times, lambdaW * vW, (p - I));
+                    Gv = bsxfun(@times, uW' * lambdaW, (p - I)')';
+    %                 if u == v
+    %                     Gu = bsxfun(@times,(lambdaW + lambdaW') * vW, (p - I));
+    %                 else
+    %                     
+    % %                     Gu_j = bsxfun(@times, (uW' *lambdaW)' , (p - I));
+    %                 end
+
+                    % TODO: do this iteratively for |Y| > 2
+                    Gl_ = zeros(k,k,Y);
+                    Gl_(:,:,1) = uW(:,1) * vW(:,1)';
+                    Gl_(:,:,2) = uW(:,2) * vW(:,2)';
+                    Gl = -Gl_(:,:,y) + Gl_(:,:,1) * p(1) + Gl_(:,:,2) * p(2);
+
+                    % regularization
+                    Gu = Gu + lambda * uW;
+                    Gv = Gv + lambda * vW;
+
+    %                 GuW(:,:,u)=GuW(:,:,u) + Gu;
+                    currentGuW = zeros(sizeGuW);
+                    currentGuW(:,:,u) = Gu; % only the current user is filled
+                    iterGuW(:,:,:,dyad) = currentGuW;
+
+                    currentGvW = zeros(sizeGuW);
+                    currentGvW(:,:,v) = Gv; % only the current user is filled
+                    iterGvW(:,:,:,dyad) = currentGvW;
+                    GlW = GlW + Gl;
+                if withSideInfo
+                    Gs = -s + s * p(1) + s * p(2);
+                    % regularization
+                    Gs = Gs + lambda * sW;
+                    GsW = GsW + Gs;
+                end
             end
         end
+        
+        
     end
     % total function sum
     fun = sum(fun);

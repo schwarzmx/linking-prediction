@@ -1,8 +1,8 @@
 %--- OPTIMIZATION METHOD ---%
 % method = 'bfgs';
 method = 'lbfgs';
-withSideInfo = 1; % yes
-% withSideInfo = 0; % no
+% withSideInfo = 1; % yes
+withSideInfo = 0; % no
 disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
