@@ -53,6 +53,8 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     userWIterV = zeros([k Y n]);
     if withSideInfo
         sideInfoIter = zeros([size(sW) n]);
+    else
+        sideInfoIter = 0;
     end
     for i = 1 : n
         u = usersU(i);
@@ -64,7 +66,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         end
     end
     
-    for dyad = 1 : n
+    parfor dyad = 1 : n
         u = usersU(dyad);
         v = usersV(dyad);
         y = labels(dyad);
