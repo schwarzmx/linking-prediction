@@ -62,81 +62,107 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         end
     end
     
-    parfor dyad = 1 : n
-        u = usersU(dyad);
-        v = usersV(dyad);
-        y = labels(dyad);
+    % working in batches since parfor requires too much memory
+    for batch = 1:5 % arbitrary number of batches
+        defaultSize = 500;
+        offset = 1 + (defaultSize * (batch - 1));
+        batchSize = min([defaultSize max([(n - offset) n])]);
         
+        if offset > n; break; end;
         
-        % ignore unknown links (left for cross-validation)
-        if y ~= 0
-            uW = userWIterU(:,:,dyad);
-            vW = userWIterV(:,:,dyad);
+        % store a batch of each variable
+        usersUBatch = usersU(offset:offset + batchSize - 1);
+        usersVBatch = usersV(offset:offset + batchSize - 1);
+        labelsBatch = labels(offset:offset + batchSize - 1);
+        userUWBatch = userWIterU(:,:,offset:offset + batchSize - 1);
+        userVWBatch = userWIterV(:,:,offset:offset + batchSize - 1);
+        sideInfoBatch = sideInfoIter(:,offset:offset + batchSize - 1);
+        if withGradient
+            GuWBatch = iterGuW(:,:,:,offset:offset + batchSize - 1);
+            GvWBatch = iterGvW(:,:,:,offset:offset + batchSize - 1);
+        end
+        
+        parfor dyad = 1 : batchSize
+            u = usersUBatch(dyad);
+            v = usersVBatch(dyad);
+            y = labelsBatch(dyad);
 
-            % Vector whose ith element is Pr[label = i | u, v; w]
-            if withSideInfo
-    %             s = sideInfo(u,:)';
-                s = sideInfoIter(:,dyad);
 
-                p = exp(diag(uW' * lambdaW * vW + sW' * s));
-            else    
-                p = exp(diag(uW' * lambdaW * vW));
-            end
-            p = p/sum(p);
-            p = p';
+            % ignore unknown links (left for cross-validation)
+            if y ~= 0
+                uW = userUWBatch(:,:,dyad);
+                vW = userVWBatch(:,:,dyad);
 
-            % only take into account the prob of the current label
-            if withSideInfo
-                reg = + (lambda / 2) * ...
-                    (norm(uW, 'fro')^2 + norm(vW, 'fro')^2 + norm(sW, 'fro')^2);
-            else
-                reg = + (lambda / 2) * (norm(uW, 'fro')^2 + norm(vW, 'fro')^2);
-            end
-
-            fun(:,dyad) = - log(p(y)) + reg;
-
-            % do log gradient
-            if withGradient
-                    I = ((1:Y) == y); % I(y = z) in the paper
-    %                 Gu = bsxfun(@times,(lambdaW + lambdaW') * uW, (p - I));
-                    Gu = bsxfun(@times, lambdaW * vW, (p - I));
-                    Gv = bsxfun(@times, uW' * lambdaW, (p - I)')';
-    %                 if u == v
-    %                     Gu = bsxfun(@times,(lambdaW + lambdaW') * vW, (p - I));
-    %                 else
-    %                     
-    % %                     Gu_j = bsxfun(@times, (uW' *lambdaW)' , (p - I));
-    %                 end
-
-                    % TODO: do this iteratively for |Y| > 2
-                    Gl_ = zeros(k,k,Y);
-                    Gl_(:,:,1) = uW(:,1) * vW(:,1)';
-                    Gl_(:,:,2) = uW(:,2) * vW(:,2)';
-                    Gl = -Gl_(:,:,y) + Gl_(:,:,1) * p(1) + Gl_(:,:,2) * p(2);
-
-                    % regularization
-                    Gu = Gu + lambda * uW;
-                    Gv = Gv + lambda * vW;
-
-    %                 GuW(:,:,u)=GuW(:,:,u) + Gu;
-                    currentGuW = zeros(sizeGuW);
-                    currentGuW(:,:,u) = Gu; % only the current user is filled
-                    iterGuW(:,:,:,dyad) = currentGuW;
-
-                    currentGvW = zeros(sizeGuW);
-                    currentGvW(:,:,v) = Gv; % only the current user is filled
-                    iterGvW(:,:,:,dyad) = currentGvW;
-                    GlW = GlW + Gl;
+                % Vector whose ith element is Pr[label = i | u, v; w]
                 if withSideInfo
-                    Gs = -s + s * p(1) + s * p(2);
-                    % regularization
-                    Gs = Gs + lambda * sW;
-                    GsW = GsW + Gs;
+        %             s = sideInfo(u,:)';
+                    s = sideInfoBatch(:,dyad);
+
+                    p = exp(diag(uW' * lambdaW * vW + sW' * s));
+                else    
+                    p = exp(diag(uW' * lambdaW * vW));
+                end
+                p = p/sum(p);
+                p = p';
+
+                % only take into account the prob of the current label
+                if withSideInfo
+                    reg = + (lambda / 2) * ...
+                        (norm(uW, 'fro')^2 + norm(vW, 'fro')^2 + norm(sW, 'fro')^2);
+                else
+                    reg = + (lambda / 2) * (norm(uW, 'fro')^2 + norm(vW, 'fro')^2);
+                end
+
+                fun(:,dyad) = - log(p(y)) + reg;
+
+                % do log gradient
+                if withGradient
+                        I = ((1:Y) == y); % I(y = z) in the paper
+        %                 Gu = bsxfun(@times,(lambdaW + lambdaW') * uW, (p - I));
+                        Gu = bsxfun(@times, lambdaW * vW, (p - I));
+                        Gv = bsxfun(@times, uW' * lambdaW, (p - I)')';
+        %                 if u == v
+        %                     Gu = bsxfun(@times,(lambdaW + lambdaW') * vW, (p - I));
+        %                 else
+        %                     
+        % %                     Gu_j = bsxfun(@times, (uW' *lambdaW)' , (p - I));
+        %                 end
+
+                        % TODO: do this iteratively for |Y| > 2
+                        Gl_ = zeros(k,k,Y);
+                        Gl_(:,:,1) = uW(:,1) * vW(:,1)';
+                        Gl_(:,:,2) = uW(:,2) * vW(:,2)';
+                        Gl = -Gl_(:,:,y) + Gl_(:,:,1) * p(1) + Gl_(:,:,2) * p(2);
+
+                        % regularization
+                        Gu = Gu + lambda * uW;
+                        Gv = Gv + lambda * vW;
+
+        %                 GuW(:,:,u)=GuW(:,:,u) + Gu;
+                        currentGuW = zeros(sizeGuW);
+                        currentGuW(:,:,u) = Gu; % only the current user is filled
+                        GuWBatch(:,:,:,dyad) = currentGuW;
+
+                        currentGvW = zeros(sizeGuW);
+                        currentGvW(:,:,v) = Gv; % only the current user is filled
+                        GvWBatch(:,:,:,dyad) = currentGvW;
+                        GlW = GlW + Gl;
+                    if withSideInfo
+                        Gs = -s + s * p(1) + s * p(2);
+                        % regularization
+                        Gs = Gs + lambda * sW;
+                        GsW = GsW + Gs;
+                    end
                 end
             end
         end
         
-        
+        % update iterators of weights (the outputs)
+        if withGradient
+            iterGuW(:,:,:,offset:offset + batchSize - 1) = GuWBatch;
+            iterGvW(:,:,:,offset:offset + batchSize - 1) = GvWBatch;
+            
+        end
     end
     % total function sum
     fun = sum(fun);
