@@ -51,9 +51,10 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
     fun = 0;
     
     % working in batches since parfor requires too much memory
-    for batch = 1:5 % arbitrary number of batches
+    numBatches = 100;
+    for batch = 1:numBatches % arbitrary number of batches
         % determine batch size
-        defaultSize = 500;
+        defaultSize = ceil(n / numBatches);
         offset = 1 + (defaultSize * (batch - 1));
         batchSize = min([defaultSize max([(n - offset) n])]);
         
