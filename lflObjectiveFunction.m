@@ -35,51 +35,58 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
         GuW = zeros(size(userUW));
         GvW = zeros(size(userVW));
         GlW = zeros(size(lambdaW));
-        sizeGuW = size(GuW);
-        iterGuW = zeros([sizeGuW n]);
-        iterGvW = zeros([sizeGuW n]);
         
         if withSideInfo
             GsW = zeros(size(sW));
         else
             GsW = 0;
         end
+    else
+        GuW = 0;
+        GvW = 0;
+        GlW = 0;
+        GsW = 0;
     end
     
-    % we'll store the values of all iterations in an array
-    % which we'll sum later after the loops
-    fun = zeros(1,n);
-    userWIterU = zeros([k Y n]);
-    userWIterV = zeros([k Y n]);
-    sideInfoIter = zeros([size(sW) n]); % used regardless of withSideInfo
-    for i = 1 : n
-        u = usersU(i);
-        v = usersV(i);
-        userWIterU(:,:,i) = userUW(:,:,u);
-        userWIterV(:,:,i) = userVW(:,:,v);
-        if withSideInfo
-            sideInfoIter(:,i) = [ sideInfo(u,:)'; sideInfo(v,:)';];
-        end
-    end
+    fun = 0;
     
     % working in batches since parfor requires too much memory
     for batch = 1:5 % arbitrary number of batches
+        % determine batch size
         defaultSize = 500;
         offset = 1 + (defaultSize * (batch - 1));
         batchSize = min([defaultSize max([(n - offset) n])]);
         
         if offset > n; break; end;
         
-        % store a batch of each variable
+        % we'll store the values of all iterations in an array
+        % which we'll sum later after the loops
+        funBatch = zeros(1,batchSize);
+        
+        % create a batch of each variable
         usersUBatch = usersU(offset:offset + batchSize - 1);
         usersVBatch = usersV(offset:offset + batchSize - 1);
         labelsBatch = labels(offset:offset + batchSize - 1);
-        userUWBatch = userWIterU(:,:,offset:offset + batchSize - 1);
-        userVWBatch = userWIterV(:,:,offset:offset + batchSize - 1);
-        sideInfoBatch = sideInfoIter(:,offset:offset + batchSize - 1);
+        userUWBatch = zeros([k Y batchSize]);
+        userVWBatch = zeros([k Y batchSize]);
+        sideInfoBatch = zeros([size(sW) batchSize]); % used regardless of withSideInfo
         if withGradient
-            GuWBatch = iterGuW(:,:,:,offset:offset + batchSize - 1);
-            GvWBatch = iterGvW(:,:,:,offset:offset + batchSize - 1);
+            sizeGuW = size(GuW);
+            GuWBatch = zeros([sizeGuW n]);
+            GvWBatch = zeros([sizeGuW n]);
+        else 
+            sizeGuW = 0;
+        end
+        
+        % prepare data for the batch
+        for i = 1 : batchSize
+            u = usersU(i);
+            v = usersV(i);
+            userUWBatch(:,:,i) = userUW(:,:,u);
+            userVWBatch(:,:,i) = userVW(:,:,v);
+            if withSideInfo
+                sideInfoBatch(:,i) = [ sideInfo(u,:)'; sideInfo(v,:)';];
+            end
         end
         
         parfor dyad = 1 : batchSize
@@ -113,7 +120,7 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
                     reg = + (lambda / 2) * (norm(uW, 'fro')^2 + norm(vW, 'fro')^2);
                 end
 
-                fun(:,dyad) = - log(p(y)) + reg;
+                funBatch(:,dyad) = - log(p(y)) + reg;
 
                 % do log gradient
                 if withGradient
@@ -156,24 +163,25 @@ function [ fun, grad ] = lflObjectiveFunction( W, varargin)
                 end
             end
         end
+        % total function sum
+        fun = fun + sum(funBatch);
         
         % update iterators of weights (the outputs)
         if withGradient
-            iterGuW(:,:,:,offset:offset + batchSize - 1) = GuWBatch;
-            iterGvW(:,:,:,offset:offset + batchSize - 1) = GvWBatch;
+            GuW = GuW + sum(GuWBatch, 4);
+            GvW = GvW + sum(GvWBatch, 4);
             
         end
     end
-    % total function sum
-    fun = sum(fun);
+    
     
     if withGradient
         % sum accross users
-        sumAccross = sum(iterGuW, 4);
-        GuW = GuW + sumAccross;
-        
-        sumAccross = sum(iterGvW, 4);
-        GvW = GvW + sumAccross;
+%         sumAccross = sum(iterGuW, 4);
+%         GuW = GuW + sumAccross;
+%         
+%         sumAccross = sum(iterGvW, 4);
+%         GvW = GvW + sumAccross;
         
         GuW = GuW(:);
         GvW = GvW(:);
