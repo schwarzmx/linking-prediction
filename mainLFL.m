@@ -6,6 +6,10 @@ withSideInfo = 0; % no
 disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
+Tr = csv2struct('dataset/tiny_train.csv');
+Te = csv2struct('dataset/tiny_val.csv');
+% Tr = csv2struct('dataset/small_train.csv');
+% Te = csv2struct('dataset/small_val.csv');
 % Tr = csv2struct('dataset/train_200.csv');
 % Te = csv2struct('dataset/test_200.csv');
 % Tr = csv2struct('dataset/train_100.csv');
@@ -24,8 +28,8 @@ disp('loading dataset...');
 % Te = csv2struct('dataset/train_2x2.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
-Tr = csv2struct('dataset/train_synthetic.csv');
-Te = csv2struct('dataset/test_synthetic.csv');
+% Tr = csv2struct('dataset/train_synthetic.csv');
+% Te = csv2struct('dataset/test_synthetic.csv');
 % Tr = csv2struct('dataset/dataset_small_train.csv');
 % Te = csv2struct('dataset/dataset_small_test.csv');
 % Tr = csv2struct('dataset/dataset_full_train.csv');
@@ -39,9 +43,9 @@ else
 end
 
 % number of latent features
-k = 1;
+k = 3;
 % penalty
-lambda = 5e-3;
+lambda = 1e-3;
 
 usersU = Tr.u;
 usersV = Tr.v;
