@@ -1,0 +1,3 @@
+matlabpool open 8
+mainLFL
+exit;
