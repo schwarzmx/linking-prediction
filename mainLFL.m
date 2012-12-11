@@ -6,38 +6,17 @@ withSideInfo = 0; % no
 disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
-%Tr = csv2struct('dataset/tiny_train.csv');
-%Te = csv2struct('dataset/tiny_val.csv');
-Tr = csv2struct('dataset/tiny_train-valV3.csv');
-Te = csv2struct('dataset/tiny_testV3.csv');
-% Tr = csv2struct('dataset/tiny_train-val.csv');
-% Te = csv2struct('dataset/tiny_test.csv');
-% Tr = csv2struct('dataset/small_train.csv');
-% Te = csv2struct('dataset/small_val.csv');
 % Tr = csv2struct('dataset/train_200.csv');
 % Te = csv2struct('dataset/test_200.csv');
 % Tr = csv2struct('dataset/train_100.csv');
 % Te = csv2struct('dataset/test_100.csv');
-% Tr = csv2struct('dataset/synthetic_50v2_train.csv');
-% Te = csv2struct('dataset/synthetic_50v2_test.csv');
-% Tr = csv2struct('dataset/synthetic_50_train.csv');
-% Te = csv2struct('dataset/synthetic_50_test.csv');
-% Tr = csv2struct('dataset/train_50.csv');
-% Te = csv2struct('dataset/test_50.csv');
-% Tr = csv2struct('dataset/train_10.csv');
-% Te = csv2struct('dataset/test_10.csv');
 % Tr = csv2struct('dataset/train_3x3.csv');
 % Te = csv2struct('dataset/test_3x3.csv');
-% Tr = csv2struct('dataset/train_2x2.csv');
-% Te = csv2struct('dataset/train_2x2.csv');
 % Tr = csv2struct('dataset/train_1x1.csv');
 % Te = csv2struct('dataset/train_1x1.csv');
 % Tr = csv2struct('dataset/train_synthetic.csv');
 % Te = csv2struct('dataset/test_synthetic.csv');
-% Tr = csv2struct('dataset/dataset_small_train.csv');
-% Te = csv2struct('dataset/dataset_small_test.csv');
-% Tr = csv2struct('dataset/dataset_full_train.csv');
-% Te = csv2struct('dataset/dataset_full_test.csv');
+
 if withSideInfo
     % the side info should contain as many features as necessary
     % but it's important to have as many rows as there are users
