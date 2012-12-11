@@ -8,8 +8,10 @@ disp('loading dataset...');
 %--- LOAD DATASET (synthetic)---%
 %Tr = csv2struct('dataset/tiny_train.csv');
 %Te = csv2struct('dataset/tiny_val.csv');
-Tr = csv2struct('dataset/tiny_train-val.csv');
-Te = csv2struct('dataset/tiny_test.csv');
+Tr = csv2struct('dataset/tiny_train-valV3.csv');
+Te = csv2struct('dataset/tiny_testV3.csv');
+% Tr = csv2struct('dataset/tiny_train-val.csv');
+% Te = csv2struct('dataset/tiny_test.csv');
 % Tr = csv2struct('dataset/small_train.csv');
 % Te = csv2struct('dataset/small_val.csv');
 % Tr = csv2struct('dataset/train_200.csv');
@@ -47,7 +49,7 @@ end
 % number of latent features
 k = 5;
 % penalty
-lambda = 1e-3;
+lambda = 1e-6;
 
 usersU = Tr.u;
 usersV = Tr.v;
@@ -94,7 +96,7 @@ if strcmp(method, 'lbfgs')
     options.Display = 'iter';
 %     options.Display = 'final';
     options.MaxFunEvals = 10000;
-    options.MaxIter = 20;
+    options.MaxIter = 40;
 elseif strcmp(method, 'bfgs')
     %--- fminunc ---%
 %     finite differences gradient
