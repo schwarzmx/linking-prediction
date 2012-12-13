@@ -1,11 +1,15 @@
 %--- OPTIMIZATION METHOD ---%
 % method = 'bfgs';
 method = 'lbfgs';
-% withSideInfo = 1; % yes
-withSideInfo = 0; % no
+withSideInfo = 1; % yes
+%withSideInfo = 0; % no
 disp('loading dataset...');
 
 %--- LOAD DATASET (synthetic)---%
+Tr = csv2struct('dataset/final_train-val.csv');
+Te = csv2struct('dataset/final_test.csv');
+%Tr = csv2struct('dataset/final_train.csv');
+%Te = csv2struct('dataset/final_val.csv');
 % Tr = csv2struct('dataset/train_200.csv');
 % Te = csv2struct('dataset/test_200.csv');
 % Tr = csv2struct('dataset/train_100.csv');
@@ -20,15 +24,16 @@ disp('loading dataset...');
 if withSideInfo
     % the side info should contain as many features as necessary
     % but it's important to have as many rows as there are users
-    sideInfo = loadSideInfo('dataset/side_info-synthetic_normalized.csv');
+    %sideInfo = loadSideInfo('dataset/side_info-synthetic_normalized.csv');
+    sideInfo = loadSideInfo('dataset/final_sideinfo.csv');
 else
     sideInfo = [];
 end
 
 % number of latent features
-k = 5;
+k = 10;
 % penalty
-lambda = 1e-6;
+lambda = 1e-2;
 
 usersU = Tr.u;
 usersV = Tr.v;
@@ -75,7 +80,7 @@ if strcmp(method, 'lbfgs')
     options.Display = 'iter';
 %     options.Display = 'final';
     options.MaxFunEvals = 10000;
-    options.MaxIter = 40;
+    options.MaxIter = 100;
 elseif strcmp(method, 'bfgs')
     %--- fminunc ---%
 %     finite differences gradient
@@ -146,13 +151,13 @@ disp('evaluating...');
 trainErrors = testLFL(@lflPredictor, W, Tr);
 testErrors = testLFL(@lflPredictor, W, Te);
 
-format = strcat('\n train/test 0-1 error = %4.4f / %4.4f',...
-    ', f1score = %4.4f / %4.4f',...
-    ', accuracy = %4.4f / %4.4f',...
-    ', precision = %4.4f / %4.4f',...
-    ', recall = %4.4f / %4.4f',...
-    ', rmse = %4.4f / %4.4f',...
-    ', mae = %4.4f / %4.4f ');
+format = strcat('\n train/test 0-1 error = %4.9f / %4.9f',...
+    ', f1score = %4.9f / %4.9f',...
+    ', accuracy = %4.9f / %4.9f',...
+    ', precision = %4.9f / %4.9f',...
+    ', recall = %4.9f / %4.9f',...
+    ', rmse = %4.9f / %4.9f',...
+    ', mae = %4.9f / %4.9f ');
 disp(sprintf(format, trainErrors.zoe, testErrors.zoe,...
     trainErrors.f1score, testErrors.f1score,...
     trainErrors.accuracy, testErrors.accuracy,...
